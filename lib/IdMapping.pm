@@ -118,18 +118,17 @@ sub do_query_slow {
 
     $add->("isbn REGEXP ?", 'isbn', ' OR ISNULL(isbn) AND ');
     $add->('issn = ?', 'issn', ' OR ISNULL(issn) AND ');
-    $add->("(ExtractValue(metadata, '//controlfield[\@tag=\"003\"]') REGEXP '((libr)|(arkm))') AND ExtractValue(metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_bibid', ' OR ');
-    $add->("(ExtractValue(metadata, '//controlfield[\@tag=\"003\"]') REGEXP '((libr)|(arkm))') AND ExtractValue(metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_99', ' OR ');
+    $add->("(ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') REGEXP '((libr)|(hig))') AND ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_bibid', ' OR ');
+    $add->("(ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') REGEXP '((libr)|(hig))') AND ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_99', ' OR ');
 
     my $q = <<"EOF";
-SELECT biblio.biblionumber, biblioitems.biblioitemnumber, isbn, issn, ExtractValue(metadata, '//controlfield[\@tag=\"001\"]') as controlnumber, ExtractValue(metadata, '//controlfield[\@tag=\"003\"]') as idtype
+SELECT biblioitems.biblionumber, biblioitems.biblioitemnumber, isbn, issn, ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') as controlnumber, ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') as idtype
 FROM
-  biblioitems JOIN biblio ON (biblio.biblionumber = biblioitems.biblionumber)
-              JOIN biblio_metadata ON (biblio.biblionumber = biblio_metadata.biblionumber AND biblio_metadata.format = 'marcxml')
+  biblioitems JOIN biblio USING (biblionumber)
+  LEFT JOIN biblio_metadata ON biblioitems.biblionumber = biblio_metadata.biblionumber
 WHERE
   $where;
 EOF
-
 
     my $sth = $self->context->dbh->prepare($q);
     my $rv = $sth->execute( @params ) or croak "Query failed!";
