@@ -116,10 +116,11 @@ sub do_query_slow {
         _add ($w, $par, $pend_w, \%params, \$where, \$pending, \%params, \@params);
     };
 
+    my $check_003 = C4::Context->preference('LocalUseKohaLibrisServicesCheck003');
     $add->("isbn REGEXP ?", 'isbn', ' OR ISNULL(isbn) AND ');
     $add->('issn = ?', 'issn', ' OR ISNULL(issn) AND ');
-    $add->("(ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') REGEXP '((libr)|(hig))') AND ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_bibid', ' OR ');
-    $add->("(ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') REGEXP '((libr)|(hig))') AND ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_99', ' OR ');
+    $add->("(ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') REGEXP '($check_003)') AND ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_bibid', ' OR ');
+    $add->("(ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') REGEXP '($check_003)') AND ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') = ?", 'libris_99', ' OR ');
 
     my $q = <<"EOF";
 SELECT biblioitems.biblionumber, biblioitems.biblioitemnumber, isbn, issn, ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"001\"]') as controlnumber, ExtractValue(biblio_metadata.metadata, '//controlfield[\@tag=\"003\"]') as idtype
